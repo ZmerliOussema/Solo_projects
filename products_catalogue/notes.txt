@@ -1,0 +1,4 @@
+Steps to setup the server:
+1. Run `npm init -y` to initialize a new Node.js project.
+2. Run `npm i express mongoose dotenv` to install dependencies.
+3. MONGO_URI and PORT are in .env file and to access this file from the backend folder we should use this line: `dotenv.config({path: '../.env'});`
