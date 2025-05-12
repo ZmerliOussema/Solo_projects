@@ -15,5 +15,15 @@ export const useProductStore = create((set) => ({
             console.log(error.message);
         }
         
+    },
+
+    // add a new product
+    addProduct: async (newProduct) => {
+        try {
+            const res = await axios.post('/api/products', {newProduct})
+            set((state) => ({ products: [...state.products, res.data]}))
+        } catch (error) {
+            console.log(error.message);
+        }
     }
 }))

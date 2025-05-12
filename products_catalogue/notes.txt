@@ -11,3 +11,6 @@ Http status code:
     * 403: Forbidden
     * 404: Not found
     * 500: Internal server error
+
+Refactoring:
+*  Add some other description to the product => details page
