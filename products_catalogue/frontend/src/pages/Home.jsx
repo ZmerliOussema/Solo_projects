@@ -1,6 +1,7 @@
 "use client"
 import { useEffect, useState } from "react"
 import { useProductStore } from "../store/product"
+import  useUIStore  from "../store/ui"
 import {
     Box,
     Container,
@@ -28,110 +29,24 @@ import {
     NumberIncrementStepper,
     NumberDecrementStepper,
     FormHelperText,
-    // useDisclosure,
     useToast,
-    Icon,
 } from "@chakra-ui/react"
-import useUIStore from "../store/ui"
 
 const Home = () => {
-    const { getProducts, products, addProduct } = useProductStore();
-    // const { onOpen, onClose } = useDisclosure();
-    const {isAddProductModal, closeAddProductModal, openAddProductModal} = useUIStore()
+    const { getProducts, products, addProduct } = useProductStore()
+    const { isAddProductModalOpen, openAddProductModal, closeAddProductModal } = useUIStore()
     const [formData, setFormData] = useState({
         name: "",
         price: "",
-        imageURL: ""
+        imageURL: "",
     })
-    const toast = useToast();
-    // Why it's used:
-    // Disabling the submit button during submission to prevent double submits.
-    // Showing a loading spinner
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const toast = useToast()
 
     // Fetch all available products
     useEffect(() => {
         getProducts()
-    }, [getProducts]) // It will re-render on every change of products.
-
-    // resetForm function
-    const resetForm = () => {
-        setFormData({
-            name: "",
-            price: "",
-            imageURL: ""
-        })
-    }
-
-    // handleSubmit function
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
-        // Basic validation
-        if (!formData.name || !formData.price || !formData.imageURL) {
-            toast({
-                title: "Missing fields",
-                description: "Please fill in all required fields",
-                status: "error",
-                duration: 3000,
-                isClosable: true
-            })
-            return;
-        }
-
-        setIsSubmitting(true);
-
-        try {
-            // Using addProduct function in the store
-            if (typeof addProduct === "function") {
-                addProduct({
-                    ...formData,
-                    price: Number.parseFloat(formData.price)
-                })
-            }
-
-            // Show success message
-            toast({
-                title: "Product added",
-                description: "Your product has been succefully added.",
-                status: "success",
-                duration: 5000,
-                isClosable: true
-            })
-
-            // Reset form and close modal
-            resetForm();
-            closeAddProductModal();
-        } catch (error) {
-            toast({
-                title: "Erroe",
-                description: "There was an error adding your product.",
-                status: "error",
-                duration: 5000,
-                isClosable: true
-            })
-            console.log("Error submitting form: ", error);
-        } finally {
-            setIsSubmitting(false);
-        }
-    }
-
-    // handldeInputChange function
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData({
-            ...formData,
-            [name]: value
-        })
-    }
-
-    // handlePriceChange
-    const handlePriceChange = (value) => {
-        setFormData({
-            ...formData,
-            price: value
-        })
-    }
+    }, [getProducts])
 
     // Color values based on color mode
     const bgColor = useColorModeValue("gray.50", "gray.900")
@@ -142,29 +57,95 @@ const Home = () => {
     const inputBg = useColorModeValue("white", "gray.700")
     const imagePreviewBg = useColorModeValue("gray.100", "gray.700")
 
+    const handleInputChange = (e) => {
+        const { name, value } = e.target
+        setFormData({
+            ...formData,
+            [name]: value,
+        })
+    }
+
+    const handlePriceChange = (value) => {
+        setFormData({
+            ...formData,
+            price: value,
+        })
+    }
+
+    const resetForm = () => {
+        setFormData({
+            name: "",
+            price: "",
+            imageURL: "",
+        })
+    }
+
+    const handleSubmit = async (e) => {
+        e.preventDefault()
+
+        // Basic validation
+        if (!formData.name || !formData.price) {
+            toast({
+                title: "Missing fields",
+                description: "Please fill in all required fields.",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            })
+            return
+        }
+
+        setIsSubmitting(true)
+
+        try {
+            // Here you would typically make an API call to save the product
+            // For example: await api.createProduct(formData);
+            console.log("Form submitted:", formData)
+
+            // If you have an addProduct function in your store
+            if (typeof addProduct === "function") {
+                addProduct({
+                    ...formData,
+                    _id: Date.now().toString(), // Temporary ID for demo
+                    price: Number.parseFloat(formData.price),
+                })
+            }
+
+            // Show success message
+            toast({
+                title: "Product added",
+                description: "Your product has been successfully added.",
+                status: "success",
+                duration: 5000,
+                isClosable: true,
+            })
+
+            // Reset form and close modal
+            resetForm()
+            closeAddProductModal()
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: "There was an error adding your product.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+            })
+            console.error("Error submitting form:", error)
+        } finally {
+            setIsSubmitting(false)
+        }
+    }
+
     return (
         <Box bg={bgColor} minH="100vh">
             <Container maxW="container.xl" py={8}>
-                <Flex
-                    direction={{ base: "column", md: "row" }}
-                    align={{ base: "center", md: "center" }}
-                    justify="space-between"
-                    mb={8}
-                    wrap="wrap"
-                >
-                    <Heading
-                        as="h1"
-                        size="xl"
-                        color={headingColor}
-                        textAlign={{ base: "center", md: "left" }}
-                        mb={{ base: 4, md: 0 }}
-                    >
-                        Current Products{" "}
-                        <Text as="span" fontSize="3xl">
-                            🚀
-                        </Text>
-                    </Heading>
-                </Flex>
+                <Heading as="h1" size="xl" mb={8} color={headingColor} textAlign="center" width="100%">
+                    Current Products{" "}
+                    <Text as="span" fontSize="3xl">
+                        🚀
+                    </Text>
+                </Heading>
 
                 {products.length === 0 ? (
                     <Flex
@@ -235,7 +216,7 @@ const Home = () => {
                 )}
 
                 {/* Add Product Modal */}
-                <Modal isOpen={isAddProductModal} onClose={closeAddProductModal} size="lg">
+                <Modal isOpen={isAddProductModalOpen} onClose={closeAddProductModal} size="lg">
                     <ModalOverlay />
                     <ModalContent bg={cardBg}>
                         <ModalHeader color={headingColor}>Add New Product</ModalHeader>

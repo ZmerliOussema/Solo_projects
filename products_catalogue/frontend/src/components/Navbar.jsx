@@ -14,12 +14,12 @@ import {
 } from "@chakra-ui/react"
 import { useMemo } from "react"
 import { useToken } from "@chakra-ui/react"
-import useUIStore from "../store/ui"
+import  useUIStore  from "../store/ui"
 
 export default function Navbar() {
     const { colorMode, toggleColorMode } = useColorMode()
     const { isOpen, onOpen, onClose } = useDisclosure()
-    const { openAddProductModal } = useUIStore();
+    const { openAddProductModal } = useUIStore()
 
     const bgColorLight = useToken("colors", "white")
     const bgColorDark = useToken("colors", "gray.800")
@@ -78,6 +78,7 @@ export default function Navbar() {
                                         <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
                                     </Icon>
                                 }
+                                onClick={openAddProductModal}
                             >
                                 Add Product
                             </Button>
