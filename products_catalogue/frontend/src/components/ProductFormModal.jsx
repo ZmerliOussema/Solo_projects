@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import {
     Modal,
     ModalOverlay,
@@ -23,16 +23,28 @@ import {
     Text,
     useColorModeValue,
     useToast,
+    Skeleton,
 } from "@chakra-ui/react"
+import { debounce } from "lodash" // You may need to install lodash
 
-const AddProductModal = ({ isOpen, onClose, addProduct }) => {
+const ProductFormModal = ({
+    isOpen,
+    onClose,
+    mode = "add", // "add" or "edit"
+    product = null, // product data for edit mode
+    onSubmit, // function to handle form submission (addProduct or updateProduct)
+}) => {
     const [formData, setFormData] = useState({
         name: "",
         price: "",
         imageURL: "",
     })
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [isImageLoading, setIsImageLoading] = useState(false)
+    const [imageError, setImageError] = useState(false)
     const toast = useToast()
+
+    const isEditMode = mode === "edit"
 
     // Color values based on color mode
     const cardBg = useColorModeValue("white", "gray.700")
@@ -42,12 +54,24 @@ const AddProductModal = ({ isOpen, onClose, addProduct }) => {
     const inputBg = useColorModeValue("white", "gray.700")
     const imagePreviewBg = useColorModeValue("gray.100", "gray.700")
 
-    // Reset form when modal closes
+    // Set form data when editing a product or reset when modal closes
     useEffect(() => {
         if (!isOpen) {
             resetForm()
+            return
         }
-    }, [isOpen])
+
+        if (isEditMode && product) {
+            setFormData({
+                name: product.name || "",
+                price: product.price ? product.price.toString() : "",
+                imageURL: product.imageURL || "",
+            })
+            // Set image loading state if there's an image URL
+            setIsImageLoading(!!product.imageURL)
+            setImageError(false)
+        }
+    }, [isOpen, isEditMode, product])
 
     const handleInputChange = (e) => {
         const { name, value } = e.target
@@ -55,7 +79,38 @@ const AddProductModal = ({ isOpen, onClose, addProduct }) => {
             ...formData,
             [name]: value,
         })
+
+        // If changing image URL, set loading state
+        if (name === "imageURL" && value) {
+            setIsImageLoading(true)
+            setImageError(false)
+            // Use debounced image validation to prevent excessive processing
+            debouncedValidateImage(value)
+        }
     }
+
+    // Debounced function to validate image URL
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const debouncedValidateImage = useCallback(
+        debounce((url) => {
+            if (!url) {
+                setIsImageLoading(false)
+                return
+            }
+
+            const img = new Image()
+            img.onload = () => {
+                setIsImageLoading(false)
+                setImageError(false)
+            }
+            img.onerror = () => {
+                setIsImageLoading(false)
+                setImageError(true)
+            }
+            img.src = url
+        }, 500),
+        [],
+    )
 
     const handlePriceChange = (value) => {
         setFormData({
@@ -70,6 +125,8 @@ const AddProductModal = ({ isOpen, onClose, addProduct }) => {
             price: "",
             imageURL: "",
         })
+        setIsImageLoading(false)
+        setImageError(false)
     }
 
     const handleSubmit = async (e) => {
@@ -90,21 +147,33 @@ const AddProductModal = ({ isOpen, onClose, addProduct }) => {
         setIsSubmitting(true)
 
         try {
-            // Here you would typically make an API call to save the product
-            console.log("Form submitted:", formData)
+            // Prepare the product data
+            const productData = {
+                ...formData,
+                price: Number.parseFloat(formData.price),
+            }
 
-            // If you have an addProduct function in your store
-            if (typeof addProduct === "function") {
-                addProduct({
-                    ...formData,
-                    price: Number.parseFloat(formData.price),
-                })
+            // If in edit mode, include the original product id
+            if (isEditMode && product) {
+                productData._id = product._id
+            }
+
+            // Call the onSubmit function passed from parent
+            if (typeof onSubmit === "function") {
+                if (isEditMode && product) {
+                    await onSubmit(productData._id, productData)
+                } else {
+                    await onSubmit(productData)
+                }
+
             }
 
             // Show success message
             toast({
-                title: "Product added",
-                description: "Your product has been successfully added.",
+                title: isEditMode ? "Product updated" : "Product added",
+                description: isEditMode
+                    ? "Your product has been successfully updated."
+                    : "Your product has been successfully added.",
                 status: "success",
                 duration: 5000,
                 isClosable: true,
@@ -116,25 +185,58 @@ const AddProductModal = ({ isOpen, onClose, addProduct }) => {
         } catch (error) {
             toast({
                 title: "Error",
-                description: "There was an error adding your product.",
+                description: `There was an error ${isEditMode ? "updating" : "adding"} your product.`,
                 status: "error",
                 duration: 5000,
                 isClosable: true,
             })
-            console.error("Error submitting form:", error)
+            console.error(`Error ${isEditMode ? "updating" : "submitting"} form:`, error)
         } finally {
             setIsSubmitting(false)
         }
+    }
+
+    // Memoized image preview component to prevent unnecessary re-renders
+    const ImagePreview = () => {
+        if (!formData.imageURL) return null
+
+        return (
+            <Box borderWidth="1px" borderRadius="md" overflow="hidden" alignSelf="center" width="100%">
+                <Text fontSize="sm" fontWeight="medium" p={2} bg={imagePreviewBg}>
+                    Image Preview
+                </Text>
+                <Box p={3} textAlign="center" height="220px" position="relative">
+                    {isImageLoading && <Skeleton height="200px" width="100%" position="absolute" top="10px" left="0" />}
+
+                    {imageError ? (
+                        <Box height="200px" display="flex" alignItems="center" justifyContent="center" color="red.500">
+                            <Text>Invalid image URL</Text>
+                        </Box>
+                    ) : (
+                        <Box
+                            as="img"
+                            src={formData.imageURL}
+                            alt="Product preview"
+                            maxH="200px"
+                            mx="auto"
+                            display={isImageLoading ? "none" : "block"}
+                            onError={() => setImageError(true)}
+                            onLoad={() => setIsImageLoading(false)}
+                        />
+                    )}
+                </Box>
+            </Box>
+        )
     }
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="lg">
             <ModalOverlay />
             <ModalContent bg={cardBg}>
-                <ModalHeader color={headingColor}>Add New Product</ModalHeader>
+                <ModalHeader color={headingColor}>{isEditMode ? "Edit Product" : "Add New Product"}</ModalHeader>
                 <ModalCloseButton />
                 <ModalBody>
-                    <form id="add-product-form" onSubmit={handleSubmit}>
+                    <form id="product-form" onSubmit={handleSubmit}>
                         <VStack spacing={6} align="flex-start">
                             <FormControl isRequired>
                                 <FormLabel color={headingColor}>Product Name</FormLabel>
@@ -174,26 +276,7 @@ const AddProductModal = ({ isOpen, onClose, addProduct }) => {
                                 <FormHelperText color={textColor}>Provide a URL to an image of your product (optional).</FormHelperText>
                             </FormControl>
 
-                            {formData.imageURL && (
-                                <Box borderWidth="1px" borderRadius="md" overflow="hidden" alignSelf="center" width="100%">
-                                    <Text fontSize="sm" fontWeight="medium" p={2} bg={imagePreviewBg}>
-                                        Image Preview
-                                    </Text>
-                                    <Box p={3} textAlign="center">
-                                        <Box
-                                            as="img"
-                                            src={formData.imageURL}
-                                            alt="Product preview"
-                                            maxH="200px"
-                                            mx="auto"
-                                            onError={(e) => {
-                                                e.target.src = "/placeholder.svg?height=200&width=300"
-                                                e.target.onerror = null
-                                            }}
-                                        />
-                                    </Box>
-                                </Box>
-                            )}
+                            {formData.imageURL && <ImagePreview />}
                         </VStack>
                     </form>
                 </ModalBody>
@@ -211,12 +294,12 @@ const AddProductModal = ({ isOpen, onClose, addProduct }) => {
                     </Button>
                     <Button
                         type="submit"
-                        form="add-product-form"
+                        form="product-form"
                         colorScheme="teal"
                         isLoading={isSubmitting}
-                        loadingText="Adding..."
+                        loadingText={isEditMode ? "Updating..." : "Adding..."}
                     >
-                        Add Product
+                        {isEditMode ? "Update Product" : "Add Product"}
                     </Button>
                 </ModalFooter>
             </ModalContent>
@@ -224,4 +307,4 @@ const AddProductModal = ({ isOpen, onClose, addProduct }) => {
     )
 }
 
-export default AddProductModal
+export default ProductFormModal

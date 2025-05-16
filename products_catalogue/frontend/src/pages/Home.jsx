@@ -1,7 +1,7 @@
 "use client"
 import { useEffect } from "react"
 import { useProductStore } from "../store/product"
-import  useUIStore  from "../store/ui.js"
+import useUIStore from "../store/ui.js"
 import {
     Box,
     Container,
@@ -32,12 +32,13 @@ import {
 import ProductCard from "../components/ProductCard"
 import AddProductModal from "../components/AddProductModal"
 import EditProductModal from "../components/EditProductModal"
+import ProductFormModal from "../components/ProductFormModal.jsx"
 
 const Home = () => {
     const { getProducts, products, addProduct, updateProduct } = useProductStore()
-    const { 
-        isAddProductModalOpen, 
-        openAddProductModal, 
+    const {
+        isAddProductModalOpen,
+        openAddProductModal,
         closeAddProductModal,
         isEditProductModalOpen,
         closeEditProductModal,
@@ -53,7 +54,7 @@ const Home = () => {
     const bgColor = useColorModeValue("gray.50", "gray.900")
     const cardBg = useColorModeValue("white", "gray.700")
     const textColor = useColorModeValue("gray.600", "gray.200")
-const headingColor = useColorModeValue("gray.800", "white")
+    const headingColor = useColorModeValue("gray.800", "white")
 
     return (
         <Box bg={bgColor} minH="100vh">
@@ -90,23 +91,25 @@ const headingColor = useColorModeValue("gray.800", "white")
                 ) : (
                     <SimpleGrid columns={{ base: 1, sm: 2, md: 3, lg: 4 }} spacing={6}>
                         {products.map((product) => (
-                            <ProductCard key={product._id} product={product}/>
+                            <ProductCard key={product._id} product={product} />
                         ))}
                     </SimpleGrid>
                 )}
-                {/* Add Product Modal */}
-                <AddProductModal 
-                    isOpen={isAddProductModalOpen} 
-                    onClose={closeAddProductModal} 
-                    addProduct={addProduct}
+                
+                {/* Unified Product Form Modal for both Add and Edit */}
+                <ProductFormModal
+                    isOpen={isAddProductModalOpen}
+                    onClose={closeAddProductModal}
+                    mode="add"
+                    onSubmit={addProduct}
                 />
 
-                {/* Edit Product Modal */}
-                <EditProductModal 
-                    isOpen={isEditProductModalOpen} 
-                    onClose={closeEditProductModal} 
-                    updateProduct={updateProduct} 
-                    productToEdit={productToEdit}
+                <ProductFormModal
+                    isOpen={isEditProductModalOpen}
+                    onClose={closeEditProductModal}
+                    mode="edit"
+                    product={productToEdit}
+                    onSubmit={updateProduct}
                 />
             </Container>
         </Box>
