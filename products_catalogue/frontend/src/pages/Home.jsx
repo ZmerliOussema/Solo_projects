@@ -30,8 +30,6 @@ import {
     FormHelperText,
 } from "@chakra-ui/react"
 import ProductCard from "../components/ProductCard"
-import AddProductModal from "../components/AddProductModal"
-import EditProductModal from "../components/EditProductModal"
 import ProductFormModal from "../components/ProductFormModal.jsx"
 
 const Home = () => {
@@ -95,7 +93,7 @@ const Home = () => {
                         ))}
                     </SimpleGrid>
                 )}
-                
+
                 {/* Unified Product Form Modal for both Add and Edit */}
                 <ProductFormModal
                     isOpen={isAddProductModalOpen}
