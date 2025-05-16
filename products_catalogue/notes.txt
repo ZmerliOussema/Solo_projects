@@ -14,3 +14,4 @@ Http status code:
 
 Refactoring:
 *  Add some other description to the product => details page
+* In product.js: I need to set a condition if (!res.success)

@@ -3,15 +3,27 @@ import {create} from 'zustand';
 // Defines a custom hook called useUIStore
 // The set function is provided by Zustand to update the store state
 const useUIStore = create((set) => ({
-    // Initialzation: Add Product is closed by default
+    // Add product Modal
     isAddProductModalOpen: false,
-    // A function that updates the state of the open modal to true
     openAddProductModal: () => set({
         isAddProductModalOpen: true }),
-    // A function that updates the state of the open modal to false
     closeAddProductModal: () => set({
         isAddProductModalOpen: false
-    })
+    }),
+
+    // Edit Product Modal
+    isEditProductModalOpen: false,
+    productToEdit: null,
+    openEditProductModal: (product) => 
+        set({
+            isEditProductModalOpen: true,
+            productToEdit: product
+        }),
+    closeEditProductModal: () => 
+        set({
+            isEditProductModalOpen: false,
+            productToEdit: null
+        })
 }))
 
 export default useUIStore;
