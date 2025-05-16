@@ -76,7 +76,7 @@ const AddProductModal = ({ isOpen, onClose, addProduct }) => {
         e.preventDefault()
 
         // Basic validation
-        if (!formData.name || !formData.price) {
+        if (!formData.name || !formData.price || !formData.imageURL) {
             toast({
                 title: "Missing fields",
                 description: "Please fill in all required fields.",
@@ -161,7 +161,7 @@ const AddProductModal = ({ isOpen, onClose, addProduct }) => {
                                 <FormHelperText color={textColor}>Enter the price in dollars.</FormHelperText>
                             </FormControl>
 
-                            <FormControl>
+                            <FormControl isRequired>
                                 <FormLabel color={headingColor}>Image URL</FormLabel>
                                 <Input
                                     name="imageURL"
