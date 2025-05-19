@@ -101,7 +101,7 @@ const ProductFormModal = ({
         if (imageSource === "url" && formData.imageURL) {
             setPreviewSrc(formData.imageURL)
         }
-    }, [imageSource, formData.imageURL])
+    }, [imageSource]) // Only run when imageSource changes
 
     const handleInputChange = (e) => {
         const { name, value } = e.target
@@ -110,26 +110,30 @@ const ProductFormModal = ({
             [name]: value,
         })
 
-        // If changing image URL, set loading state
-        if (name === "imageURL" && value) {
-            setIsImageLoading(true)
-            setImageError(false)
-            // Use debounced image validation to prevent excessive processing
-            debouncedValidateImage(value)
+        // If changing image URL, set loading state and update preview immediately
+        if (name === "imageURL") {
+            if (value) {
+                setIsImageLoading(true)
+                setImageError(false)
+                setPreviewSrc(value) // Immediately set preview source
+                // Use debounced image validation to prevent excessive processing
+                debouncedValidateImage(value)
+            } else {
+                setPreviewSrc("") // Clear preview when URL is empty
+                setIsImageLoading(false)
+            }
         }
     }
 
-    // Debounced function to validate image URL
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     const debouncedValidateImage = useCallback(
         debounce((url) => {
             if (!url) {
                 setIsImageLoading(false)
-                setPreviewSrc("")
                 return
             }
 
             const img = new Image()
+            img.crossOrigin = "*" // Add this to avoid CORS issues
             img.onload = () => {
                 setIsImageLoading(false)
                 setImageError(false)
@@ -357,7 +361,9 @@ const ProductFormModal = ({
                     Image Preview
                 </Text>
                 <Box p={3} textAlign="center" height="220px" position="relative">
-                    {isImageLoading && <Skeleton height="200px" width="100%" position="absolute" top="10px" left="0" />}
+                    {isImageLoading && (
+                        <Skeleton height="200px" width="100%" position="absolute" top="10px" left="0" zIndex="1" />
+                    )}
 
                     {imageError ? (
                         <Box height="200px" display="flex" alignItems="center" justifyContent="center" color="red.500">
@@ -373,6 +379,7 @@ const ProductFormModal = ({
                             display={isImageLoading ? "none" : "block"}
                             onError={() => setImageError(true)}
                             onLoad={() => setIsImageLoading(false)}
+                            crossOrigin="anonymous"
                         />
                     )}
                 </Box>

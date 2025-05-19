@@ -4,6 +4,7 @@ import axios from 'axios'
 export const useProductStore = create((set) => ({
     
     products : [], // Getter
+    product: {},
     setProducts: products => set({products}), // Setter
 
     // Fetch all available products
@@ -15,6 +16,17 @@ export const useProductStore = create((set) => ({
             console.log(error.message);
         }
         
+    },
+
+    // Fetch one single product by its Id
+    getOneProduct: async (product) => {
+        try {
+            const res = await axios.get(`http://localhost:8000/api/products/${product._id}`);
+            set({product: res.data.data})
+            console.log(product);
+        } catch (error) {
+            console.log(error.message);
+        }
     },
 
     // Add a new product
